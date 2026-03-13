@@ -1,0 +1,117 @@
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy:alpine
+    container_name: smartedge_nginx_proxy
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./docker/nginx/custom.conf:/etc/nginx/conf.d/custom.conf:ro
+    networks:
+      - smartedge
+
+  smartedge_api:
+    build:
+      context: ./docker/php/8.2
+      dockerfile: Dockerfile
+      args:
+        WWWGROUP: '${WWWGROUP:-1000}'
+    image: smartedge-php-8.2/app
+    container_name: smartedge_api
+    hostname: smartedge_api
+    expose:
+      - "80"
+    environment:
+      WWWUSER: '${WWWUSER:-1000}'
+      APP_ENV: local
+      TZ: 'America/New_York'
+      VIRTUAL_HOST: dev.api.smartedge.test
+      VIRTUAL_PORT: 80
+    volumes:
+      - ./api:/var/www/html
+    networks:
+      smartedge:
+        aliases:
+          - dev.api.smartedge.com
+    depends_on:
+      - smartedge_postgres
+      - smartedge_redis
+      - smartedge_mailpit
+
+  smartedge_app:
+    image: node:22
+    container_name: smartedge_app
+    hostname: smartedge_app
+    working_dir: /app
+    expose:
+      - "8080"
+    environment:
+      TZ: 'America/New_York'
+      VIRTUAL_HOST: dev.app.smartedge.test
+      VIRTUAL_PORT: 8080
+    volumes:
+      - ./app:/app
+    command: bash -c "npm install && npm run dev -- --host 0.0.0.0 --port 8080"
+    networks:
+      smartedge:
+        aliases:
+          - dev.app.smartedge.com
+    depends_on:
+      - smartedge_api
+
+  smartedge_postgres:
+    image: postgres:16-alpine
+    container_name: smartedge_postgres
+    hostname: smartedge_postgres
+    ports:
+      - '${FORWARD_DB_PORT:-5432}:5432'
+    environment:
+      POSTGRES_DB: smartedge
+      POSTGRES_USER: smartedge
+      POSTGRES_PASSWORD: password
+      TZ: 'America/New_York'
+    volumes:
+      - smartedge-postgres:/var/lib/postgresql/data
+    networks:
+      - smartedge
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smartedge -d smartedge"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  smartedge_redis:
+    image: redis:alpine
+    container_name: smartedge_redis
+    hostname: smartedge_redis
+    ports:
+      - '${FORWARD_REDIS_PORT:-6379}:6379'
+    volumes:
+      - smartedge-redis:/data
+    networks:
+      - smartedge
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  smartedge_mailpit:
+    image: axllent/mailpit:latest
+    container_name: smartedge_mailpit
+    hostname: smartedge_mailpit
+    ports:
+      - '${FORWARD_MAILPIT_PORT:-1025}:1025'
+      - '${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025'
+    networks:
+      - smartedge
+
+networks:
+  smartedge:
+    driver: bridge
+
+volumes:
+  smartedge-postgres:
+    driver: local
+  smartedge-redis:
+    driver: local

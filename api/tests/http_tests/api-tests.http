@@ -1,0 +1,7 @@
+### Health check
+GET http://dev.api.smartedge.test/api/v1/health
+Accept: application/json
+
+### Watchlist
+GET http://dev.api.smartedge.test/api/v1/watchlist-tickers
+Accept: application/json
