@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/c/dev/smartedge-lab/app/src/style.css:*)",
+      "Bash(/c/dev/smartedge-lab/app/src/composables/useMarketData.js:*)",
+      "Bash(/c/dev/smartedge-lab/app/src/components/ui/PanelCard.vue:*)",
+      "Bash(/c/dev/smartedge-lab/app/src/components/layout/AppTopbar.vue:*)",
+      "Bash(/c/dev/smartedge-lab/app/src/views/HomeView.vue:*)",
+      "Bash(/c/dev/smartedge-lab/app/src/stores/signals.js:*)",
+      "Bash(/c/dev/smartedge-lab/app/src/stores/scanner.js:*)",
+      "Bash(/c/dev/smartedge-lab/app/src/composables/useSignals.js:*)",
+      "Bash(/c/dev/smartedge-lab/app/postcss.config.js:*)",
+      "Bash(npx vite:*)",
+      "Bash(timeout 5 npm run dev)"
+    ]
+  }
+}

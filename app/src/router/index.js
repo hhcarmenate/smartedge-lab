@@ -1,59 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from "../views/HomeView.vue";
-import LoginView from "../views/LoginView.vue";
-import DashboardView from "@/views/DashboardView.vue";
-import AppLayout from "@/layouts/AppLayout.vue";
-import {useAuthStore} from "@/stores/auth.js";
-
-import watchlistsRoutes from "@/modules/watchlists/routes/index.js";
 
 const routes = [
-    {
-        path: '/',
-        name: 'home',
-        component: HomeView
-    },
-    {
-        path: '/login',
-        name: 'login',
-        component: LoginView
-    },
-    {
-        path: '/app',
-        component: AppLayout,
-        meta: {
-            requiresAuth: true
-        },
-        children: [
-            {
-                path: '',
-                redirect: { name: 'dashboard' }
-            },
-            {
-                path: 'dashboard',
-                name: 'dashboard',
-                component: DashboardView
-            },
-            ...watchlistsRoutes
-        ]
-    }
+  { path: '/',          component: () => import('../views/HomeView.vue') },
+  { path: '/dashboard', component: () => import('../views/DashboardView.vue') },
+  { path: '/scanner',   component: () => import('../views/ScannerView.vue') },
+  { path: '/signals',   component: () => import('../views/SignalsView.vue') },
+  { path: '/portfolio', component: () => import('../views/PortfolioView.vue') },
+  { path: '/charts',    component: () => import('../views/ChartsView.vue') },
+  { path: '/settings',  component: () => import('../views/SettingsView.vue') },
 ]
 
-const router = createRouter({
-    history: createWebHistory(),
-    routes
+export default createRouter({
+  history: createWebHistory(),
+  routes
 })
-
-router.beforeEach((to) => {
-    const authStore = useAuthStore()
-
-    if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-        return { name: 'login' }
-    }
-
-    if (to.name === 'login' && authStore.isAuthenticated) {
-        return { name: 'dashboard' }
-    }
-})
-
-export default router
