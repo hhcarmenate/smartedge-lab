@@ -9,8 +9,8 @@ const router = useRouter()
   <div class="px-10 py-20 bg-bg-base text-center">
     <h2 class="text-[32px] font-bold mb-3">Ready to trade smarter?</h2>
     <p class="text-text-muted text-[15px] mb-8 max-w-[500px] mx-auto">Join thousands of traders using SmartEdge Lab to find better options trades.</p>
-    <AppButton variant="primary" @click="router.push('/dashboard')">
-      Start Free Trial
+    <AppButton variant="primary" @click="router.push('/login')">
+      Sign In to Start Trading
     </AppButton>
   </div>
 </template>

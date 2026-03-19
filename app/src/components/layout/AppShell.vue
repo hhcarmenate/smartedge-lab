@@ -9,7 +9,7 @@ import AppTopbar from './AppTopbar.vue'
     <div class="flex flex-col flex-1">
       <AppTopbar />
       <div class="flex-1 overflow-auto">
-        <slot name="content" />
+        <router-view />
       </div>
     </div>
   </div>

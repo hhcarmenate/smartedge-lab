@@ -1,5 +1,40 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@import './styles/tokens.css';
+@theme {
+    /* ── Backgrounds ── */
+    --color-bg-base:      #04070F;
+    --color-bg-surface:   #0C1220;
+    --color-bg-elevated:  #111929;
+    --color-bg-hover:     #162035;
+
+    /* ── Borders ── */
+    --color-border:        #1A2640;
+    --color-border-strong: #243352;
+
+    /* ── Accents ── */
+    --color-cyan:         #00D4FF;
+    --color-cyan-dim:     #00A8CC;
+    --color-violet:       #7B5CF5;
+    --color-violet-dim:   #5B3FD4;
+
+    /* ── Semantic ── */
+    --color-profit:       #00E676;
+    --color-profit-dim:   #00B85A;
+    --color-loss:         #FF3366;
+    --color-loss-dim:     #CC2250;
+    --color-warn:         #FFB300;
+
+    /* ── Text ── */
+    --color-text-primary: #E2E8F4;
+    --color-text-muted:   #8B9DC3;
+    --color-text-ghost:   #4A5A7A;
+
+    /* ── Typography ── */
+    --font-sans: "Space Grotesk", sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+
+    /* ── Border radius ── */
+    --radius-card: 10px;
+    --radius-chip: 6px;
+    --radius-pill: 20px;
+}

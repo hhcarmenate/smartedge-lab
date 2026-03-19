@@ -40,8 +40,8 @@ const stats = [
       
       <!-- CTA buttons -->
       <div class="flex gap-3 mb-10">
-        <AppButton variant="primary" @click="router.push('/dashboard')">
-          Get Started
+        <AppButton variant="primary" @click="router.push('/login')">
+          Sign In
         </AppButton>
         <AppButton variant="ghost">
           Learn More

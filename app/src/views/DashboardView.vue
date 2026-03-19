@@ -1,5 +1,4 @@
 <script setup>
-import AppShell from '../components/layout/AppShell.vue'
 import MetricsRow from '../components/dashboard/MetricsRow.vue'
 import SignalsTable from '../components/dashboard/SignalsTable.vue'
 import PnLChart from '../components/dashboard/PnLChart.vue'
@@ -10,31 +9,27 @@ import AlertsFeed from '../components/dashboard/AlertsFeed.vue'
 </script>
 
 <template>
-  <AppShell>
-    <template #content>
-      <div class="flex flex-col gap-3.5 p-4 bg-bg-base min-h-screen">
+  <div class="flex flex-col gap-3.5 p-4 bg-bg-base min-h-screen">
         <!-- Metrics row -->
         <MetricsRow />
-        
+
         <!-- Main grid -->
         <div class="grid grid-cols-[3fr_2fr] gap-3.5">
           <!-- Left: Signals table -->
           <SignalsTable />
-          
+
           <!-- Right column: stacked cards -->
           <div class="flex flex-col gap-3.5">
             <PnLChart />
             <MarketHeatMap />
           </div>
         </div>
-        
+
         <!-- Bottom grid -->
         <div class="grid grid-cols-3 gap-3.5">
           <PortfolioMini />
           <ScannerHighlights />
           <AlertsFeed />
         </div>
-      </div>
-    </template>
-  </AppShell>
+  </div>
 </template>

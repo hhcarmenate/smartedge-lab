@@ -1,98 +1,85 @@
 <script setup>
-import BaseModal from '@/components/BaseModal.vue'
-import BaseButton from '@/components/BaseButton.vue'
+import { X, Trash2, AlertTriangle } from 'lucide-vue-next'
 
 const props = defineProps({
-  show: {
-    type: Boolean,
-    default: false
-  },
-  symbol: {
-    type: Object,
-    default: null
-  },
-  loading: {
-    type: Boolean,
-    default: false
-  }
+  show: { type: Boolean, default: false },
+  symbol: { type: Object, default: null },
+  loading: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['close', 'confirm'])
 
-const handleClose = () => {
-  emit('close')
-}
-
-const handleConfirm = async () => {
-  if (!props.symbol?.id) return
+const handleConfirm = () => {
+  if (!props.symbol?.id || props.loading) return
   emit('confirm', props.symbol.id)
 }
 </script>
 
 <template>
-  <BaseModal
-    :show="show"
-    title="Disconnect Market Asset"
-    max-width="max-w-md"
-    @close="handleClose"
-  >
-    <div class="space-y-6">
-      <div class="flex items-center gap-4 rounded-2xl border border-danger/10 bg-danger/5 p-4">
-        <div class="flex h-12 w-12 items-center justify-center rounded-xl border border-danger/20 bg-black text-xl shadow-inner">⚠️</div>
-        <div class="space-y-1">
-          <h4 class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-danger/60">Warning: Terminal Separation</h4>
-          <p class="text-xs font-medium text-text-secondary leading-relaxed">
-            You are about to disconnect <span class="font-black text-white underline decoration-danger/40">{{ symbol?.symbol?.ticker }}</span> from this terminal instance.
-          </p>
-        </div>
-      </div>
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition duration-150"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-100"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="emit('close')" />
 
-      <div class="rounded-xl border border-dashed border-white/10 p-5 bg-white/[0.01]">
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <span class="font-mono text-[9px] font-bold uppercase tracking-widest text-white/20">Target Asset</span>
-            <span class="font-mono text-xs font-black text-accent">{{ symbol?.symbol?.ticker }}</span>
+        <!-- Modal -->
+        <div class="relative z-10 w-full max-w-sm mx-4 bg-bg-surface border border-border rounded-card shadow-2xl">
+
+          <!-- Header -->
+          <div class="flex items-center justify-between px-5 py-4 border-b border-border">
+            <div class="flex items-center gap-2">
+              <AlertTriangle class="h-4 w-4 text-loss" />
+              <h2 class="text-sm font-semibold text-text-primary">Remove Symbol</h2>
+            </div>
+            <button
+              @click="emit('close')"
+              class="flex items-center justify-center w-7 h-7 rounded-chip text-text-ghost hover:bg-bg-hover hover:text-text-primary transition-all"
+            >
+              <X class="h-4 w-4" />
+            </button>
           </div>
-          <div class="h-px bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
-          <p class="text-[11px] font-medium leading-relaxed text-white/40 italic">
-            "Real-time data streams and historical synchronization for this ticker will be suspended immediately upon confirmation."
-          </p>
+
+          <!-- Body -->
+          <div class="px-5 py-5 space-y-4">
+            <p class="text-sm text-text-muted">
+              Remove
+              <span class="font-mono font-bold text-text-primary">{{ symbol?.symbol?.ticker }}</span>
+              from this watchlist?
+            </p>
+            <p class="font-mono text-[10px] text-text-ghost">This only removes the symbol from the watchlist. The symbol itself is not deleted.</p>
+          </div>
+
+          <!-- Footer -->
+          <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-border">
+            <button
+              @click="emit('close')"
+              class="h-8 px-3 rounded-chip font-mono text-[11px] text-text-ghost border border-border hover:text-text-muted hover:border-border-strong transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              @click="handleConfirm"
+              :disabled="loading"
+              class="flex items-center gap-1.5 h-8 px-4 bg-loss text-white rounded-chip font-mono text-[11px] font-bold uppercase tracking-[0.15em] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg v-if="loading" class="h-3 w-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              <Trash2 v-else class="h-3 w-3" />
+              {{ loading ? 'Removing...' : 'Remove' }}
+            </button>
+          </div>
+
         </div>
       </div>
-    </div>
-
-    <template #footer>
-      <BaseButton
-        variant="ghost"
-        @click="handleClose"
-      >
-        Abort
-      </BaseButton>
-      <BaseButton
-        variant="danger"
-        :loading="loading"
-        @click="handleConfirm"
-      >
-        <span>Confirm Disconnect</span>
-        <template #icon>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </template>
-      </BaseButton>
-    </template>
-  </BaseModal>
+    </Transition>
+  </Teleport>
 </template>
-
-<style scoped>
-.text-danger {
-  color: #ef4444;
-}
-.border-danger\/10 {
-  border-color: rgba(239, 68, 68, 0.1);
-}
-.bg-danger\/5 {
-  background-color: rgba(239, 68, 68, 0.05);
-}
-.decoration-danger\/40 {
-  text-decoration-color: rgba(239, 68, 68, 0.4);
-}
-</style>

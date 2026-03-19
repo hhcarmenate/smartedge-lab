@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Services\MarketAnalytics\FeatureDefinitions\PriceAboveEmaFeature;
 use App\Services\MarketAnalytics\FeatureEngine;
 use App\Services\MarketAnalytics\IndicatorEngine;
+use App\Services\MarketAnalytics\SetupEngine;
 use Illuminate\Console\Command;
 
 class TestIndicatorEngine extends Command
@@ -17,7 +17,8 @@ class TestIndicatorEngine extends Command
      */
     public function handle(
         IndicatorEngine $indicatorEngine,
-        FeatureEngine $featureEngine
+        FeatureEngine $featureEngine,
+        SetupEngine $setupEngine
     ): void {
 
         $candles = $this->mockCandles();
@@ -37,6 +38,10 @@ class TestIndicatorEngine extends Command
 
         $this->info('Feature results:');
         $this->line(json_encode($featureResults, JSON_PRETTY_PRINT));
+
+        $setupResults = $setupEngine->evaluate($featureResults, $indicatorResults);
+        $this->info('Setup results:');
+        $this->line(json_encode($setupResults, JSON_PRETTY_PRINT));
     }
 
     /**

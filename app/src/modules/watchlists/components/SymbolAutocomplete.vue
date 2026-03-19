@@ -1,12 +1,11 @@
 <script setup>
-import { ref, watch, onBeforeUnmount, computed } from 'vue'
-import axios from 'axios'
-import BaseAutocomplete from '@/components/BaseAutocomplete.vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useWatchlistStore } from '@/modules/watchlists/stores/useWatchlistStore'
+import { Search, X } from 'lucide-vue-next'
 
 const props = defineProps({
   modelValue: {
-    type: [String, Number, Object],
+    type: String,
     default: null,
   },
 })
@@ -15,132 +14,133 @@ const emit = defineEmits(['update:modelValue'])
 
 const watchlistStore = useWatchlistStore()
 
-const searchQuery = ref('')
-const loading = ref(false)
+const query = ref('')
+const showDropdown = ref(false)
 const debounceId = ref(null)
+const selectedItem = ref(null)
 
-const selectedSymbol = computed(() => {
-  return symbols.value.find(symbol => symbol.ticker === props.modelValue) || null
-})
+const results = computed(() => watchlistStore.symbolsResult ?? [])
+const loading = computed(() => watchlistStore.loadingSymbol)
 
-const symbols = computed(() => {
-  return watchlistStore.symbolsResult ?? []
-})
-
-const handleUpdate = (val) => {
-  emit('update:modelValue', val)
+const fetchSymbols = async (q) => {
+  const clean = q.trim()
+  if (clean.length < 1) return
+  await watchlistStore.getBySymbol({ query: clean, limit: 10 })
 }
 
-const fetchSymbols = async (query) => {
-  const cleanQuery = query.trim()
+const onInput = () => {
+  selectedItem.value = null
+  emit('update:modelValue', null)
+  showDropdown.value = true
 
-  if (cleanQuery.length < 1) {
-    symbols.value = []
-    return
-  }
-
-  try {
-    loading.value = true
-    await watchlistStore.getBySymbol( {query: cleanQuery, limit: 10})
-  } catch (error) {
-    console.error('Symbol search error:', error)
-    symbols.value = []
-  } finally {
-    loading.value = false
-  }
+  if (debounceId.value) clearTimeout(debounceId.value)
+  debounceId.value = setTimeout(() => fetchSymbols(query.value), 350)
 }
 
-watch(searchQuery, (newValue) => {
-  if (debounceId.value) {
-    clearTimeout(debounceId.value)
-  }
+const selectItem = (item) => {
+  selectedItem.value = item
+  query.value = item.ticker
+  showDropdown.value = false
+  emit('update:modelValue', item.ticker)
+}
 
-  debounceId.value = setTimeout(() => {
-    fetchSymbols(newValue)
-  }, 350)
+const clearSelection = () => {
+  selectedItem.value = null
+  query.value = ''
+  showDropdown.value = false
+  emit('update:modelValue', null)
+  watchlistStore.symbolsResult = []
+}
+
+const onBlur = () => {
+  setTimeout(() => { showDropdown.value = false }, 150)
+}
+
+watch(() => props.modelValue, (val) => {
+  if (!val) {
+    selectedItem.value = null
+    query.value = ''
+  }
 })
 
 onBeforeUnmount(() => {
-  if (debounceId.value) {
-    clearTimeout(debounceId.value)
-  }
+  if (debounceId.value) clearTimeout(debounceId.value)
 })
 </script>
 
 <template>
-  <div class="symbol-autocomplete">
-    <BaseAutocomplete
-        :model-value="modelValue"
-        :items="symbols"
-        :loading="loading"
-        label="Symbol Selection"
-        placeholder="Type ticker or asset name (e.g. AAPL...)"
-        item-text="ticker"
-        item-value="ticker"
-        @update:model-value="handleUpdate"
-        @search="searchQuery = $event"
-    >
-      <template #item="{ item }">
-        <div class="flex items-center justify-between gap-4 py-1">
-          <div>
-            <p class="font-mono text-sm font-black text-white">
-              {{ item.ticker }}
-            </p>
-            <p class="text-xs text-white/50">
-              {{ item.name }}
-            </p>
-          </div>
+  <div class="flex flex-col gap-2">
+    <!-- Input -->
+    <div class="relative">
+      <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-ghost pointer-events-none" />
+      <input
+        v-model="query"
+        type="text"
+        placeholder="Search ticker or name (e.g. AAPL)..."
+        class="w-full bg-bg-elevated border border-border rounded-chip pl-9 pr-8 py-2 font-mono text-sm text-text-primary placeholder:text-text-ghost outline-none focus:border-cyan/40 transition-colors"
+        @input="onInput"
+        @focus="showDropdown = query.length > 0"
+        @blur="onBlur"
+      />
+      <button
+        v-if="query"
+        @mousedown.prevent="clearSelection"
+        class="absolute right-2 top-1/2 -translate-y-1/2 text-text-ghost hover:text-text-muted transition-colors"
+      >
+        <X class="h-3.5 w-3.5" />
+      </button>
+    </div>
 
-          <div class="text-right">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-accent/70">
-              {{ item.symbol_type }}
-            </p>
-            <p class="text-[10px] text-white/35">
-              {{ item.primary_exchange }}
-            </p>
-          </div>
-        </div>
-      </template>
-    </BaseAutocomplete>
-
+    <!-- Dropdown -->
     <div
-        v-if="selectedSymbol"
-        class="mt-4 rounded-xl border border-accent/10 bg-accent/5 p-4 transition-all animate-in fade-in slide-in-from-top-2"
+      v-if="showDropdown && (loading || results.length > 0)"
+      class="bg-bg-surface border border-border rounded-card shadow-2xl max-h-56 overflow-y-auto"
     >
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-accent/20 bg-black font-mono text-xs font-black text-accent shadow-glow">
-            {{ selectedSymbol.ticker?.[0] }}
-          </div>
-
-          <div>
-            <p class="font-mono text-[10px] font-bold uppercase tracking-widest text-accent/60">
-              Selected Asset
-            </p>
-            <h4 class="text-sm font-black text-white">
-              {{ selectedSymbol.ticker }}
-            </h4>
-            <p class="text-xs text-white/45">
-              {{ selectedSymbol.name }}
-            </p>
-          </div>
+      <!-- Loading -->
+      <div v-if="loading" class="flex items-center gap-2 px-4 py-3 font-mono text-[11px] text-text-ghost">
+        <div class="flex gap-1">
+          <div class="h-1 w-1 animate-bounce bg-cyan rounded-full" />
+          <div class="h-1 w-1 animate-bounce bg-cyan rounded-full [animation-delay:0.15s]" />
+          <div class="h-1 w-1 animate-bounce bg-cyan rounded-full [animation-delay:0.3s]" />
         </div>
+        Searching...
+      </div>
 
-        <div class="text-right">
-          <p class="font-mono text-[10px] font-bold uppercase tracking-widest text-white/30">
-            Exchange
-          </p>
-          <p class="text-[10px] font-bold uppercase text-success">
-            {{ selectedSymbol.primary_exchange || 'N/A' }}
-          </p>
+      <!-- Results -->
+      <template v-else>
+        <button
+          v-for="item in results"
+          :key="item.ticker"
+          @mousedown.prevent="selectItem(item)"
+          class="w-full flex items-center justify-between gap-4 px-4 py-2.5 hover:bg-bg-elevated transition-colors text-left"
+        >
+          <div>
+            <p class="font-mono text-sm font-bold text-text-primary">{{ item.ticker }}</p>
+            <p class="font-mono text-[10px] text-text-ghost truncate max-w-[200px]">{{ item.name }}</p>
+          </div>
+          <div class="text-right shrink-0">
+            <p class="font-mono text-[10px] font-bold text-cyan/70 uppercase">{{ item.symbol_type }}</p>
+            <p class="font-mono text-[10px] text-text-ghost">{{ item.primary_exchange }}</p>
+          </div>
+        </button>
+      </template>
+    </div>
+
+    <!-- Selected preview -->
+    <div
+      v-if="selectedItem"
+      class="flex items-center justify-between bg-cyan/5 border border-cyan/20 rounded-chip px-3 py-2"
+    >
+      <div class="flex items-center gap-2">
+        <div class="flex items-center justify-center w-7 h-7 rounded bg-cyan/10 border border-cyan/20 font-mono text-[10px] font-bold text-cyan">
+          {{ selectedItem.ticker?.[0] }}
+        </div>
+        <div>
+          <p class="font-mono text-xs font-bold text-text-primary">{{ selectedItem.ticker }}</p>
+          <p class="font-mono text-[10px] text-text-ghost">{{ selectedItem.name }}</p>
         </div>
       </div>
+      <span class="font-mono text-[10px] text-text-ghost">{{ selectedItem.primary_exchange }}</span>
     </div>
   </div>
 </template>
-
-<style scoped>
-.shadow-glow {
-  box-shadow: 0 0 15px rgba(255, 138, 0, 0.15);
-}
-</style>

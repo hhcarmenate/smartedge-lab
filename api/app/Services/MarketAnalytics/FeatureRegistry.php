@@ -11,6 +11,7 @@ use App\Services\MarketAnalytics\FeatureDefinitions\EmaBearishStackFeature;
 use App\Services\MarketAnalytics\FeatureDefinitions\EmaBullishStackFeature;
 use App\Services\MarketAnalytics\FeatureDefinitions\PriceAboveEmaFeature;
 use App\Services\MarketAnalytics\FeatureDefinitions\PriceBelowEmaFeature;
+use App\Services\MarketAnalytics\FeatureDefinitions\PriceNearEmaFeature;
 use App\Services\MarketAnalytics\FeatureDefinitions\RsiAboveThresholdFeature;
 use App\Services\MarketAnalytics\FeatureDefinitions\RsiBelowThresholdFeature;
 use App\Services\MarketAnalytics\FeatureDefinitions\VolumeAboveAverageFeature;
@@ -112,6 +113,20 @@ class FeatureRegistry
                 'context' => [
                     'period' => 14,
                     'threshold' => 0.01,
+                ],
+            ],
+            [
+                'instance' => new PriceNearEmaFeature(),
+                'context' => [
+                    'period' => 20,
+                    'tolerance_atr_multiplier' => 0.5,
+                ],
+            ],
+            [
+                'instance' => new PriceNearEmaFeature(),
+                'context' => [
+                    'period' => 50,
+                    'tolerance_atr_multiplier' => 0.5,
                 ],
             ],
         ];

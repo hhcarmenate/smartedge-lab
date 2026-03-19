@@ -1,83 +1,91 @@
 <script setup>
-import { ref } from 'vue'
-import BaseModal from '@/components/BaseModal.vue'
-import BaseButton from '@/components/BaseButton.vue'
+import { ref, watch } from 'vue'
+import { X, Plus } from 'lucide-vue-next'
 import SymbolAutocomplete from './SymbolAutocomplete.vue'
 
 const props = defineProps({
-  show: {
-    type: Boolean,
-    default: false
-  }
+  show: { type: Boolean, default: false },
+  loading: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['close', 'confirm'])
 
-const selectedSymbol = ref(null)
+const selectedTicker = ref(null)
 
 const handleClose = () => {
-  selectedSymbol.value = null
   emit('close')
 }
 
 const handleConfirm = () => {
-  if (selectedSymbol.value) {
-    emit('confirm', selectedSymbol.value)
-    handleClose()
+  if (selectedTicker.value && !props.loading) {
+    emit('confirm', selectedTicker.value)
   }
 }
+
+watch(() => props.show, (val) => {
+  if (!val) selectedTicker.value = null
+})
 </script>
 
 <template>
-  <BaseModal
-    :show="show"
-    title="Allocate Market Asset"
-    max-width="max-w-md"
-    @close="handleClose"
-  >
-    <div class="space-y-6">
-      <div class="flex items-center gap-4 rounded-2xl border border-white/5 bg-white/[0.02] p-4">
-        <div class="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black text-xl shadow-inner">🛰️</div>
-        <div class="space-y-1">
-          <h4 class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">Operation Mode</h4>
-          <p class="text-xs font-medium text-text-secondary leading-relaxed">
-            Search and select a new asset ticker to synchronize with your terminal watchlist.
-          </p>
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition duration-150"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-100"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="handleClose" />
+
+        <!-- Modal -->
+        <div class="relative z-10 w-full max-w-md mx-4 bg-bg-surface border border-border rounded-card shadow-2xl">
+
+          <!-- Header -->
+          <div class="flex items-center justify-between px-5 py-4 border-b border-border">
+            <div class="flex items-center gap-2">
+              <Plus class="h-4 w-4 text-cyan" />
+              <h2 class="text-sm font-semibold text-text-primary">Add Symbol</h2>
+            </div>
+            <button
+              @click="handleClose"
+              class="flex items-center justify-center w-7 h-7 rounded-chip text-text-ghost hover:bg-bg-hover hover:text-text-primary transition-all"
+            >
+              <X class="h-4 w-4" />
+            </button>
+          </div>
+
+          <!-- Body -->
+          <div class="p-5">
+            <SymbolAutocomplete v-model="selectedTicker" />
+          </div>
+
+          <!-- Footer -->
+          <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-border">
+            <button
+              @click="handleClose"
+              class="h-8 px-3 rounded-chip font-mono text-[11px] text-text-ghost border border-border hover:text-text-muted hover:border-border-strong transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              @click="handleConfirm"
+              :disabled="!selectedTicker || loading"
+              class="flex items-center gap-2 h-8 px-4 bg-cyan text-bg-base rounded-chip font-mono text-[11px] font-bold uppercase tracking-[0.15em] hover:bg-cyan-dim transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg v-if="loading" class="h-3 w-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              {{ loading ? 'Adding...' : 'Add Symbol' }}
+            </button>
+          </div>
+
         </div>
       </div>
-
-      <SymbolAutocomplete v-model="selectedSymbol" />
-
-      <div class="rounded-xl border border-dashed border-white/10 p-4">
-        <div class="flex items-center gap-3">
-          <div class="h-1.5 w-1.5 rounded-full bg-accent/40"></div>
-          <span class="font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">Auto-validation active</span>
-        </div>
-      </div>
-    </div>
-
-    <template #footer>
-      <BaseButton
-        variant="ghost"
-        @click="handleClose"
-      >
-        Abort
-      </BaseButton>
-      <BaseButton
-        @click="handleConfirm"
-        :disabled="!selectedSymbol"
-      >
-        <span>Confirm Allocation</span>
-        <template #icon>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        </template>
-      </BaseButton>
-    </template>
-  </BaseModal>
+    </Transition>
+  </Teleport>
 </template>
-
-<style scoped>
-.shadow-glow {
-  box-shadow: 0 0 20px rgba(255, 138, 0, 0.25);
-}
-</style>
